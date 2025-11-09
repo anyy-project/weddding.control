@@ -667,38 +667,69 @@ function formatTimestamp(timestamp) {
 // Contact Picker Support Check
 function checkContactPickerSupport() {
     const importBtn = document.getElementById('importFromContactsBtn');
+    const ua = navigator.userAgent.toLowerCase();
     
-    // Check if Contact Picker API is supported
-    if ('contacts' in navigator && 'ContactsManager' in window) {
-        // API is supported, show the button
+    // Detect mobile devices (iOS and Android)
+    const isMobile = /iphone|ipad|ipod|android/i.test(ua);
+    const isIOS = /iphone|ipad|ipod/i.test(ua);
+    const isAndroid = /android/i.test(ua);
+    
+    console.log('=== Device Detection ===');
+    console.log('User Agent:', navigator.userAgent);
+    console.log('Is Mobile:', isMobile);
+    console.log('Is iOS:', isIOS);
+    console.log('Is Android:', isAndroid);
+    console.log('Has contacts API:', 'contacts' in navigator);
+    console.log('Has ContactsManager:', 'ContactsManager' in window);
+    
+    // Show button on mobile devices (will check actual API support when clicked)
+    if (isMobile) {
         importBtn.style.display = 'inline-flex';
-        console.log('✅ Contact Picker API is supported on this device!');
+        console.log('✅ Mobile device detected - showing import button');
     } else {
-        // API not supported, keep button hidden
         importBtn.style.display = 'none';
-        console.log('❌ Contact Picker API is NOT supported on this device.');
-        console.log('User Agent:', navigator.userAgent);
-        console.log('Platform:', navigator.platform);
+        console.log('❌ Desktop detected - hiding import button');
     }
 }
 
 // Contact Picker Functions
 function openContactPicker() {
-    // Double-check support
+    console.log('=== Opening Contact Picker ===');
+    console.log('Has contacts API:', 'contacts' in navigator);
+    
+    // Check support saat diklik
     if (!('contacts' in navigator)) {
-        showToast('⚠️ Fitur ini hanya tersedia di mobile browser (Chrome Android, Safari iOS)', 'warning');
+        const ua = navigator.userAgent.toLowerCase();
+        const isIOS = /iphone|ipad|ipod/i.test(ua);
+        const iosVersion = ua.match(/os (\d+)_/);
+        
+        if (isIOS) {
+            let message = '❌ Safari iOS Anda belum support Contact Picker API.';
+            if (iosVersion && parseInt(iosVersion[1]) < 14) {
+                message += '\n\n💡 Update iOS ke versi 14.5 atau lebih baru.';
+            } else {
+                message += '\n\n💡 Pastikan iOS dan Safari sudah versi terbaru (iOS 14.5+)';
+            }
+            alert(message);
+        } else {
+            showToast('⚠️ Browser Anda tidak support Contact Picker API', 'warning');
+        }
         return;
     }
     
+    console.log('✅ Opening modal...');
     document.getElementById('contactSelectionModal').classList.add('active');
     selectedContacts = [];
     document.getElementById('selectedContactsPreview').style.display = 'none';
 }
 
 async function selectContacts() {
+    console.log('=== Selecting Contacts ===');
+    
     try {
         // Check if Contact Picker API is supported
         if (!('contacts' in navigator)) {
+            console.error('Contact Picker API not available');
             showToast('❌ Browser Anda tidak mendukung Contact Picker API', 'error');
             return;
         }
@@ -706,8 +737,12 @@ async function selectContacts() {
         const props = ['name', 'tel'];
         const opts = { multiple: true };
 
+        console.log('Calling navigator.contacts.select()...');
+        
         // Open contact picker
         const contacts = await navigator.contacts.select(props, opts);
+        
+        console.log('Contacts returned:', contacts);
         
         if (contacts && contacts.length > 0) {
             selectedContacts = [];
